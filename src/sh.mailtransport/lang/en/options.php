@@ -16,3 +16,5 @@ $MESS['MAILTRANSPORT_OPTIONS_USERNAME']    = 'User name';
 $MESS['MAILTRANSPORT_OPTIONS_PASSWORD']    = 'Password (not shown)';
 $MESS['MAILTRANSPORT_OPTIONS_PORT']        = 'Port (typically 465 for SSL connections and 25 for conventional)';
 $MESS['MAILTRANSPORT_OPTIONS_SSL']         = 'Secure connection (SSL)';
+
+$MESS['MAILTRANSPORT_NET_SMTP_NOT_INSTALLED'] = '<a href="http://pear.php.net/package/Net_SMTP/">PEAR::Net_SMTP</a> needed.';

@@ -34,11 +34,11 @@ if (
     if (!isset($_POST['settings']['ssl'])) {
         $_POST['settings']['ssl'] = 0;
     }
-    COption::SetOptionInt('mailtransport', 'ssl', $_POST['settings']['ssl']);
+    COption::SetOptionInt('sh.mailtransport', 'ssl', $_POST['settings']['ssl']);
     unset($_POST['settings']['ssl']);
 
     foreach ($_POST['settings'] as $settingName => $settingValue) {
-        COption::SetOptionString('mailtransport', $settingName, $settingValue);
+        COption::SetOptionString('sh.mailtransport', $settingName, $settingValue);
     }
 
     if (strlen($_REQUEST['Update']) && strlen($_REQUEST['back_url_settings'])) {
@@ -52,6 +52,18 @@ if (
             "&".$tabControl->ActiveTabParam()
         );
     }
+}
+
+// Dependencies check...
+if (!@include_once 'Net/SMTP.php') {
+    $message = new CAdminMessage(
+        array(
+            'MESSAGE' => GetMessage('MAILTRANSPORT_NET_SMTP_NOT_INSTALLED'),
+            'HTML'    => true,
+        )
+    );
+    
+    echo $message->Show();
 }
 
 $tabControl->Begin();
@@ -71,7 +83,7 @@ $tabControl->Begin();
                 <input
                     type="text"
                     size="30"
-                    value="<?php echo COption::GetOptionString('mailtransport', 'host') ?>"
+                    value="<?php echo COption::GetOptionString('sh.mailtransport', 'host') ?>"
                     name="settings[host]" />
             </td>
         </tr>
@@ -84,7 +96,7 @@ $tabControl->Begin();
                 <input
                     type="text"
                     size="30"
-                    value="<?php echo COption::GetOptionString('mailtransport', 'username') ?>"
+                    value="<?php echo COption::GetOptionString('sh.mailtransport', 'username') ?>"
                     name="settings[username]" />
             </td>
         </tr>
@@ -107,7 +119,7 @@ $tabControl->Begin();
                 <input
                     type="text"
                     size="30"
-                    value="<?php echo COption::GetOptionInt('mailtransport', 'port') ?>"
+                    value="<?php echo COption::GetOptionInt('sh.mailtransport', 'port') ?>"
                     name="settings[port]" />
             </td>
         </tr>
@@ -117,7 +129,7 @@ $tabControl->Begin();
                 <input
                     type="checkbox"
                     value="1"
-                    <?php echo (COption::GetOptionInt('mailtransport', 'ssl') ? 'checked="checked"' : '') ?>
+                    <?php echo (COption::GetOptionInt('sh.mailtransport', 'ssl') ? 'checked="checked"' : '') ?>
                     name="settings[ssl]" />
             </td>
         </tr>

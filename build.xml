@@ -1,18 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project name="mailtransport" default="pear-package" basedir=".">
+<project name="sh.mailtransport" default="build-all" basedir=".">
 
     <property name="buildDirectory" value="./build" />
     <property name="sourceDirectory" value="./src" />
     <property name="testsDirectory" value="./tests" />
-    <property name="bitrix.moduleVersion" value="0.1.0" />
+    <property
+    	name="tempDirectory"
+    	value="/tmp/${phing.project.name}-${bitrix.moduleVersion}-${bitrix.moduleVersionDate}" />
 
-    <!-- Current time... -->
+	<!-- Package properties. -->
+	<property name="bitrix.moduleName" value="sh.mailtransport" />
+    <property name="bitrix.moduleVersion" value="1.0.0" />
     <tstamp>
+    	<!-- Current time... -->
         <format property="bitrix.moduleVersionDate" pattern="%F %T" />
     </tstamp>
-
-    <property name="package.summary" value="Bitrix mail transport module" />
+    <property name="pear.packageName" value="mailtransport" />
+    <property name="pear.packageSummary" value="Bitrix mail transport module" />
+    <property name="pear.channelName" value="capall.shockov.com" />
+	<php function="file_get_contents" returnProperty="pear.packageNotes">
+		<param value="${sourceDirectory}/${bitrix.moduleName}/description.en" />
+	</php>
 
     <target name="check-style">
         <phpcodesniffer
@@ -32,13 +41,13 @@
         </phpcodesniffer>
     </target>
 
-    <target name="run-tests">
+    <target name="run-tests" depends="prepare-build-directory">
+    	<mkdir dir="${buildDirectory}/phpunit-reports" />
         <phpunit
-            haltonerror="true"
-            haltonfailure="true">
+        	printsummary="true">
             <formatter
-                usefile="false"
-                type="plain" />
+            	todir="${buildDirectory}/phpunit-reports"
+                type="xml" />
             <batchtest>
                 <fileset dir="${testsDirectory}/">
                     <include name="**/*Test.php" />
@@ -53,12 +62,19 @@
             includeemptydirs="true"
             verbose="false"
             failonerror="true" />
+        <mkdir dir="${buildDirectory}" />
     </target>
 
-    <target name="prepare-files" depends="prepare-build-directory">
-        <copy todir="${buildDirectory}/${phing.project.name}-${bitrix.moduleVersion}">
+    <target
+        name="prepare-sources-for-pear-package"
+        depends="prepare-build-directory"
+        description="Prepare files for PEAR package.">
+        <copy todir="${tempDirectory}/pear/new/${pear.packageName}-${bitrix.moduleVersion}">
             <filterchain>
                 <expandproperties />
+                <replaceregexp>
+                    <regexp pattern="dirname\(__FILE__\).'/../../../../src" replace="'capall" ignoreCase="true" />
+                </replaceregexp>
             </filterchain>
 
             <fileset dir="${sourceDirectory}">
@@ -70,24 +86,49 @@
         </copy>
     </target>
 
-    <target name="pear-package" depends="run-tests, prepare-files">
-        <pearpkg2 name="${phing.project.name}" dir="${buildDirectory}/${phing.project.name}-${bitrix.moduleVersion}">
-            <option name="outputdirectory" value="${buildDirectory}" />
+    <target
+        name="build-all"
+        depends="build-pear-package, build-marketplace-module, build-marketplace-module-update"
+        description="Build all available types of packages.">
+
+    </target>
+
+    <target
+        name="build-pear-package"
+        depends="run-tests, prepare-sources-for-pear-package"
+        description="Build PEAR package.">
+
+        <!-- Getting previous package.xml for changelog... -->
+		<httpget
+			url="http://${pear.channelName}/rest/r/${pear.packageName}/latest.txt"
+			dir="${tempDirectory}/pear" />
+		<php function="file_get_contents" returnProperty="pear.packagePreviousVersion">
+			<param value="${tempDirectory}/pear/latest.txt" />
+		</php>
+		<mkdir dir="${tempDirectory}/pear/latest" />
+		<httpget
+			url="http://${pear.channelName}/rest/r/${pear.packageName}/package.${pear.packagePreviousVersion}.xml"
+			dir="${tempDirectory}/pear/latest"
+			filename="package.xml" />
+
+        <pearpkg2 name="${pear.packageName}" dir="${tempDirectory}/pear/new/${pear.packageName}-${bitrix.moduleVersion}">
+            <option name="outputdirectory" value="${tempDirectory}/pear/new" />
             <option name="packagefile" value="package.xml" />
-            <option name="packagedirectory" value="${buildDirectory}/${phing.project.name}-${bitrix.moduleVersion}" />
+            <option name="pathtopackagefile" value="${tempDirectory}/pear/latest" />
+            <option name="packagedirectory" value="${tempDirectory}/pear/new/${pear.packageName}-${bitrix.moduleVersion}" />
             <option name="baseinstalldir" value="capall" />
-            <option name="channel" value="capall.shockov.com" />
-            <option name="summary" value="${package.summary}" />
-            <option name="description" value="${package.summary}." />
+            <option name="channel" value="${pear.channelName}" />
+            <option name="summary" value="${pear.packageSummary}" />
+            <option name="description" value="${pear.packageSummary}." />
             <option name="apiversion" value="${bitrix.moduleVersion}" />
             <option name="apistability" value="beta" />
             <option name="releaseversion" value="${bitrix.moduleVersion}" />
-            <option name="releasestability" value="beta" />
+            <option name="releasestability" value="stable" />
             <option name="license" value="LGPL" />
             <option name="phpdep" value="5.0.0" />
             <option name="pearinstallerdep" value="1.4.6" />
             <option name="packagetype" value="php" />
-            <option name="notes" value="Initial build." />
+            <option name="notes" value="${pear.packageNotes}" />
             <mapping name="dir_roles">
                 <element key="tests" value="test" />
             </mapping>
@@ -109,13 +150,63 @@
                     <element key="recommended" value="false" />
                 </element>
             </mapping>
-            <fileset dir="${buildDirectory}/${phing.project.name}-${bitrix.moduleVersion}">
+            <fileset dir="${tempDirectory}/pear/new/${pear.packageName}-${bitrix.moduleVersion}">
                 <include name="**" />
             </fileset>
         </pearpkg2>
 
-        <tar destfile="${buildDirectory}/${phing.project.name}-${bitrix.moduleVersion}.tgz" compression="gzip">
-            <fileset dir="${buildDirectory}">
+        <mkdir dir="${buildDirectory}/pear" />
+
+        <tar destfile="${buildDirectory}/pear/${pear.packageName}-${bitrix.moduleVersion}.tgz" compression="gzip">
+            <fileset dir="${tempDirectory}/pear/new">
+                <include name="**" />
+            </fileset>
+        </tar>
+    </target>
+
+    <target
+        name="build-marketplace-module"
+        depends="run-tests, prepare-build-directory"
+        description="Build module for Bitrix marketplace.">
+        <copy todir="${tempDirectory}/bitrix-marketplace-module/.last_version">
+            <filterchain>
+                <expandproperties />
+				<iconvfilter inputencoding="UTF-8" outputencoding="CP1251" />
+            </filterchain>
+
+            <fileset dir="${sourceDirectory}/${phing.project.name}">
+                <include name="**" />
+            </fileset>
+        </copy>
+
+        <mkdir dir="${buildDirectory}/bitrix-marketplace" />
+
+        <tar destfile="${buildDirectory}/bitrix-marketplace/.last_version.tar.gz" compression="gzip">
+            <fileset dir="${tempDirectory}/bitrix-marketplace-module">
+                <include name="**" />
+            </fileset>
+        </tar>
+    </target>
+
+    <target
+        name="build-marketplace-module-update"
+        depends="run-tests, prepare-build-directory"
+        description="Build module update for Bitrix marketplace.">
+        <copy todir="${tempDirectory}/bitrix-marketplace-module-update/${bitrix.moduleVersion}">
+            <filterchain>
+                <expandproperties />
+				<iconvfilter inputencoding="UTF-8" outputencoding="CP1251" />
+            </filterchain>
+
+            <fileset dir="${sourceDirectory}/${phing.project.name}">
+                <include name="**" />
+            </fileset>
+        </copy>
+
+        <mkdir dir="${buildDirectory}/bitrix-marketplace" />
+
+        <tar destfile="${buildDirectory}/bitrix-marketplace/${bitrix.moduleVersion}.tar.gz" compression="gzip">
+            <fileset dir="${tempDirectory}/bitrix-marketplace-module-update">
                 <include name="**" />
             </fileset>
         </tar>

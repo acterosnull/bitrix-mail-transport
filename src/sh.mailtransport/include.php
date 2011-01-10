@@ -6,11 +6,15 @@
 // Some system functionality for Bitrix (mailtransport::registerTransport()).
 require_once dirname(__FILE__).'/install/index.php';
 
-require_once 'Net/SMTP.php';
+if (!@include_once 'Net/SMTP.php') {
+	// TODO Log unavailable dependency issue...
+	return;
+}
 
 require_once dirname(__FILE__).'/classes/Capall/MailTransportException.php';
 require_once dirname(__FILE__).'/classes/Capall/MailTransport/Sender.php';
 
+// TODO Custom mail handler already exists! Log issue.
 if (!function_exists('custom_mail')) {
     /**
      * @see CEvent::HandleEvent()
@@ -31,13 +35,13 @@ if (!function_exists('custom_mail')) {
         try {
             if (!$sender) {
                 if (!$transport) {
-                    $host     = COption::GetOptionString('mailtransport', 'host');
-                    if (COption::GetOptionInt('mailtransport', 'ssl')) {
+                    $host     = COption::GetOptionString('sh.mailtransport', 'host');
+                    if (COption::GetOptionInt('sh.mailtransport', 'ssl')) {
                         $host = 'ssl://'.$host;
                     }
-                    $port     = COption::GetOptionInt('mailtransport', 'port');
-                    $user     = COption::GetOptionString('mailtransport', 'username');
-                    $password = COption::GetOptionString('mailtransport', 'password');
+                    $port     = COption::GetOptionInt('sh.mailtransport', 'port');
+                    $user     = COption::GetOptionString('sh.mailtransport', 'username');
+                    $password = COption::GetOptionString('sh.mailtransport', 'password');
 
                     $transport = new Net_SMTP($host, $port);
 
@@ -59,7 +63,7 @@ if (!function_exists('custom_mail')) {
             CEventLog::Log(
                 'WARNING',
                 'MAILTRANSPORT_ERROR',
-                'mailtransport',
+                'sh.mailtransport',
                 null, // TODO Or try to get event identifier to here?
                 (string)$error
             );

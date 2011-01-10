@@ -38,11 +38,23 @@ class Capall_MailTransport_Sender
     public function send($to, $subject, $message, $additionalHeaders = '')
     {
         preg_match('/From: (.+)\n/i', $additionalHeaders, $matches);
-        // TODO Handle empty $from?
         list(, $from) = $matches;
 
-        $this->_transport->mailFrom($from);
-        $this->_transport->rcptTo($to);
+        if (PEAR::isError($settingResult = $this->_transport->mailFrom(trim($from)))) {
+            throw new Capall_MailTransportException($settingResult);
+        }
+
+        // $to string may contains many recipients.
+        $to = split(',', $to);
+        foreach ($to as $recipient) {
+            $recipient = trim($recipient);
+
+            if (!empty($recipient)) {
+                if (PEAR::isError($settingResult = $this->_transport->rcptTo($recipient))) {
+                    throw new Capall_MailTransportException($settingResult);
+                }
+            }
+        }
 
         $eol = CAllEvent::GetMailEOL();
 
