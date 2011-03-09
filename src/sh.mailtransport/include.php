@@ -1,6 +1,6 @@
 <?php
 /**
- * custom_mail for Bitrix.
+ * custom_mail() for Bitrix.
  */
 
 // Some system functionality for Bitrix (mailtransport::registerTransport()).
@@ -48,6 +48,8 @@ if (!function_exists('custom_mail')) {
                     if (PEAR::isError($connectionResult = $transport->connect())) {
                         throw new Capall_MailTransportException($connectionResult);
                     }
+
+                    // TODO Server without authentication?..
                     if (PEAR::isError($authenticationResult = $transport->auth($user, $password))) {
                         throw new Capall_MailTransportException($authenticationResult);
                     }

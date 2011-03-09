@@ -31,7 +31,7 @@ class sh_mailtransport extends CModule
     public function __construct()
     {
         // Magic... Don't works, if in top of file.
-        IncludeModuleLangFile(__FILE__);
+        IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"].BX_ROOT.'/modules/'.$this->MODULE_ID.'/install/index.php');
 
         $this->MODULE_NAME        = GetMessage('MAILTRANSPORT_MODULE_NAME');
         $this->MODULE_DESCRIPTION = GetMessage('MAILTRANSPORT_MODULE_DESCRIPTION');

@@ -6,8 +6,8 @@
 /*
  * Include some standard language constants.
  */
-IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/options.php");
-IncludeModuleLangFile(__FILE__);
+IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"].BX_ROOT.'/modules/main/options.php');
+IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"].BX_ROOT.'/modules/sh.mailtransport/options.php');
 
 $tabs = array(
     array(
@@ -62,7 +62,7 @@ if (!@include_once 'Net/SMTP.php') {
             'HTML'    => true,
         )
     );
-    
+
     echo $message->Show();
 }
 

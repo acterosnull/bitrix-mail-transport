@@ -45,8 +45,8 @@ class Capall_MailTransport_Sender
         }
 
         // $to string may contains many recipients.
-        $to = split(',', $to);
-        foreach ($to as $recipient) {
+        $recipients = explode(',', $to);
+        foreach ($recipients as $recipient) {
             $recipient = trim($recipient);
 
             if (!empty($recipient)) {
