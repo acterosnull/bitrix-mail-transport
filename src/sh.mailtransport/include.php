@@ -67,7 +67,8 @@ if (!function_exists('custom_mail')) {
                 'MAILTRANSPORT_ERROR',
                 'sh.mailtransport',
                 null, // TODO Or try to get event identifier to here?
-                (string)$error
+                // PHP 5.1.6. Fuck.
+                $error->__toString()
             );
 
             return false;
